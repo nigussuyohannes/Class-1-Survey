@@ -1,0 +1,125 @@
+---
+title: 'Lab: Class One Survey Analysis'
+output:
+  html_document:
+    
+---
+
+### **INSTRUCTIONS**
+####  **Complete all tasks 1-7 using reproducible coding practices (annotation of all code). Use R syntax to solve all problems (i.e. do not manually change values/variables in datasets or check them manually to make sure things are correct except as a double or triple check). Please cut and paste each problem before each R markdown chunk and annotate your code within the chunks.**
+
+##### 1. Import class one survey data from our Github site (https://github.com/kijohnson/Advanced-Data-Analysis) (The dataset is called 'Class 1 Survey Fall 2026.csv'), calling the R dataframe that you create *C1survey*.
+```{r}
+#library the necessary packages need to run the analysis
+pacman::p_load(haven, tidyverse, dplyr, readr, table1)
+#Import the Class-1-survey data from github reposiroty
+class_1_survey<-read_csv(
+  "https://github.com/nigussuyohannes/Class-1-Survey/raw/refs/heads/main/Class-1-Survey-Fall-2026.csv"
+)
+```
+
+##### 2. Determine: **a.** the number of observations (i.e. the number of people who filled out the survey) and **b.** the number of variables in the dataframe.    
+```{r}
+#a. determining number of observations:
+nrow(class_1_survey)
+#b. determining the number of variables in the dataframe:
+ncol(class_1_survey)
+#simplest code to get both observations and variables in a single code:
+dim(class_1_survey)
+```
+
+
+##### 3. **a.** Rename the column variables to something shorter and that is descriptive of what the variable is about (for example *like_dogs* for the 'Do you like dogs?' question variable) and **b.** Display that they are renamed. **Hints**: You can use either the rename_with function or the names function. The list of names for time is:
+
+```{r, echo=TRUE}
+c("id", "like_cats", "like_dogs", "have_desert", "slogan", "fav_day", "larkORowl", "fav_food", "fav_drink", "fav_season", "fav_month", "hobby", "program", "specialization", "stat_software", "R_exp", "coding_comfort", "coding_length", "top_three", "public_health_interest", "fav_num", "bday", "bmonth", "country", "state", "city",  "highest_educ_level")
+```
+
+
+```{r}
+#renaming the variables using the rename function:
+C1S<- rename(class_1_survey, c("id"="id", "like_cats"= "Do you like cats?", "like_dogs"= "Do you like dogs?", "have_desert"= "If you were stranded on a desert island, what is the one item you want to have with you?", "slogan"="If you were to create a slogan for your life, what would the slogan be? (Examples: \"Eat, drink, and be merry, for tomorrow, we all die.\" \"Bite off more than you can chew.\" \"There are far better things ahead than any we leave behind.\")", "fav_day"="What is your favorite day of the week?" , "larkORowl"= "Are you a lark, an owl, or a hummingbird?", "fav_food"= "What is your favorite food?" , "fav_drink"="What is your favorite drink?", "fav_season"= "What is your favorite season?", "fav_month"= "What is your favorite Month?", "hobby"= "What is one hobby that you enjoy?", "program"="What is your degree program?", "specialization"= "What is your primary specialization?", "stat_software"="What is your primary statistical software?", "R_exp"="What is your level of R experience (1=None, 5=Advanced)?", "coding_comfort"="How comfortable are you with coding?", "coding_length"="How long have you been coding (in years or months)?", "top_three"="What are three things you hope to learn in this course?", "public_health_interest"="What is your major public health area of interest (e.g. cancer, heart disease, maternal child health, disparities, etc.)?", "fav_num"="What is your favorite number?", "bday"="What is your birth day (e.g. October 28, report \"28\" without quotation marks)?", "bmonth"="What is your birth month (e.g. for October 28, report \"10\" without quotation marks)?", "country"="What is your home country?", "state"="What is your home state/province/etc?", "city"="What is your home city?",  "highest_educ_level"= "What is your highest education level?") )
+
+#check if the rename worked
+colnames(C1S)
+```
+
+##### 4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the *C1survey* dataset. **Suggestion**: Try to ask ChatGPT for a solution if you are unsure. There is a really short answer to this but we want to see what students come up with!
+```{r}
+#determining number of factor, integer, numerical and character
+table(sapply(C1S, class))
+```
+
+##### 5. **a.** Using code, check the *bday* and *bmonth* variables for any unusual or missing values (**hint**: use table function). If you find any, **b.** describe what you will do with the unusual values in a comment before or immediately following the code that does it, and **c.** after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+```{r}
+#a.
+#checking for unusual or missing values for bday variable
+table(C1S$bday, useNA = "ifany")
+#checking for unusual or missing values for bmonth variable
+table(C1S$bmonth, useNA = "ifany")
+#b.I will convert the unusual values to numeric representations of months and days.
+#Converting the unusual bday values
+C1S$bday<- as.character(C1S$bday) #to make sure the variables are characters
+C1S$bday[C1S$bday %in% c("29-Nov","30-Nov")]<- c("29","30")
+#Check the conversion worked with the same code as above
+table(C1S$bday, useNA = "ifany")
+#converting the unusual bmonth values
+C1S$bmonth<- as.character(C1S$bmonth) #to make sure the variables are characters
+C1S$bmonth[C1S$bmonth %in% c("February", "March", "May", "November")]<- c("2", "3", "5", "11")
+#Check the conversion worked
+table(C1S$bmonth, useNA = "ifany")
+#c.
+#convert bday and bmonth variables to numeric
+C1S[c("bday", "bmonth")]<- lapply(
+  C1S[c("bday", "bmonth")],
+  as.numeric
+)
+#Check the class of the variables
+sapply(C1S[c("bday", "bmonth")], class)
+#Finding the median of bday and bmonth
+sapply(C1S[c("bday", "bmonth")], median, na.rm= TRUE)
+```
+
+##### 6. **a.** Create a new variable called *bseason* that gives the season according to Northern Meteorological season in which respondents were born (winter = 12/1 to 2/29, spring = 3/1 to 5/31, summer = 6/1 to 8/31, fall = 9/1 to 11/30). **b**. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct **c**. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code. 
+```{r}
+#a. creating new variable (bseason)
+C1S$bseason<-ifelse(C1S$bmonth %in% c(12,1,2), "winter",
+                    ifelse(C1S$bmonth %in% c(3,4,5), "spring",
+                           ifelse(C1S$bmonth %in% c(6,7,8), "summer",
+                                  ifelse(C1S$bmonth %in% c(9,10,11), "fall", NA))))
+#b. printing the new bseason variable in columns vs bmonth in rows
+table(C1S$bmonth, C1S$bseason)
+#Adding the columns using the addmargins function
+addmargins(table(C1S$bmonth, C1S$bseason))
+#     fall spring summer winter Sum
+#  1      0      0      0      2   2
+#  2      0      0      0      3   3
+#  3      0      2      0      0   2
+#  4      0      1      0      0   1
+#  5      0      2      0      0   2
+#  6      0      0      3      0   3
+#  8      0      0      2      0   2
+#  9      1      0      0      0   1
+#  10     8      0      0      0   8
+#  11     6      0      0      0   6
+#  Sum   15      5      5      5  30
+```
+
+##### 7. Pick your favorite variable or variables to analyze, come up with a question you want to answer with that variable or variables, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #'s).
+
+```{r}
+#I picked *R_exp* (R experiance) and *program* (academic programs) to see if there is difference in R experience across academic programs
+# Research Question: Is mean R experience different across academic programs?
+#to answer this research question I will use one-way ANOVA (aov model)
+#to compute the ANOVA we need to check the class of each variables as we need a continous (R_exp) and categorical(program) variables.
+sapply(C1S[c("R_exp", "program")], class) #checking the class of each variable
+# Convert *program* variable to factor
+C1S$program<- as.factor(C1S$program)
+#now that the variables are ready compute the ANOVA using aov function
+model<- aov(R_exp~ program, data = C1S)
+summary(model)
+# One-way ANOVA was conducted to compare R-experience across academic programs. There was no statistically significant difference in mean R-experience among programs F(1,29)= 0.879, p=0.356.
+```
+
+
+
